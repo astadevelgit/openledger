@@ -840,8 +840,6 @@ main {
 }
 
 .data-table thead th {
-  position: sticky;
-  top: 56px;
   background: var(--paper);
   font-size: 0.6875rem;
   font-weight: 600;
@@ -849,7 +847,6 @@ main {
   text-transform: uppercase;
   color: var(--ink-soft);
   border-bottom: 1px solid var(--rule);
-  z-index: 1;
   white-space: nowrap;
 }
 
@@ -1279,8 +1276,6 @@ main {
 
   .sankey { overflow-x: auto; scrollbar-width: thin; }
   .sankey svg { min-width: 680px; }
-
-  .data-table thead th { position: static; }
 
   #contractTable { min-width: 760px; }
   #contractorTable { min-width: 540px; }
