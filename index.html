@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenLedger — Where does the money go?</title>
+<meta name="description" content="OpenLedger is a demo budget and procurement transparency dashboard for Nigeria: federal and state spending by ministry, state and contractor." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='6' fill='%230E2A24'/%3E%3Ctext x='32' y='43' font-family='Georgia,serif' font-size='30' fill='%23F7F4EC' text-anchor='middle'%3EOL%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="topbar__inner">
+    <a class="brand" href="#top">
+      <span class="brand__mark" aria-hidden="true">OL</span>
+      <span class="brand__name">OpenLedger</span>
+    </a>
+    <span class="scope-badge">Nigeria · 36 states + FCT</span>
+    <nav class="nav" aria-label="Sections">
+      <a href="#overview">Overview</a>
+      <a href="#ministries">Ministries</a>
+      <a href="#states">States</a>
+      <a href="#procurement">Procurement</a>
+      <a href="#contractors">Contractors</a>
+      <a href="#sources">Sources</a>
+    </nav>
+    <div class="topbar__tools">
+      <label class="search">
+        <span class="visually-hidden">Search contracts, contractors or projects</span>
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M13.5 13.5 17 17M15 9a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input id="globalSearch" type="search" placeholder="Search contracts, contractors" autocomplete="off" />
+      </label>
+    </div>
+  </div>
+</header>
+
+<div class="utility" role="note">
+  <div class="utility__inner">
+    <span class="dot" aria-hidden="true"></span>
+    <strong>Demo dataset</strong>
+    <span aria-hidden="true">·</span>
+    <span>Updated 6 Nov 2026</span>
+    <span aria-hidden="true">·</span>
+    <span>Amounts in NGN</span>
+    <span class="utility__warn">Illustrative figures — not official data</span>
+  </div>
+</div>
+
+<main id="main">
+
+  <section class="hero" id="overview" aria-labelledby="heroTitle">
+    <p class="eyebrow">Federal &amp; state budgets · procurement awards</p>
+    <h1 id="heroTitle">Where does the money go?</h1>
+    <p class="lede">
+      Follow appropriation from Abuja to the last mile — by ministry, by state, by the
+      contractor who signed. Every figure below is filterable and traceable to a source.
+    </p>
+
+    <form class="filters" id="filters" aria-describedby="filterSummary">
+      <div class="filters__row">
+        <fieldset class="segmented">
+          <legend class="visually-hidden">Government level</legend>
+          <label><input type="radio" name="scope" value="all" checked /><span>All</span></label>
+          <label><input type="radio" name="scope" value="federal" /><span>Federal</span></label>
+          <label><input type="radio" name="scope" value="states" /><span>States</span></label>
+        </fieldset>
+
+        <label class="field">
+          <span class="field__label">Fiscal year</span>
+          <select id="yearFilter"></select>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Ministry</span>
+          <select id="ministryFilter"></select>
+        </label>
+
+        <label class="field">
+          <span class="field__label">State</span>
+          <select id="stateFilter"></select>
+        </label>
+
+        <label class="field field--grow">
+          <span class="field__label">Contractor or project</span>
+          <input id="queryFilter" type="search" placeholder="e.g. Sahel, solar, feeder road" autocomplete="off" />
+        </label>
+
+        <button type="button" class="button button--quiet" id="resetFilters">Reset</button>
+      </div>
+      <div class="chips" id="chips" aria-label="Active filters"></div>
+      <p class="visually-hidden" id="filterSummary" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section class="kpis" aria-label="Summary for the current selection">
+    <article class="kpi">
+      <p class="label">Total budget</p>
+      <p class="kpi__value" id="kpiBudget">—</p>
+      <p class="kpi__meta"><span id="kpiBudgetDelta"></span></p>
+      <svg class="spark" id="sparkBudget" viewBox="0 0 120 32" aria-hidden="true" focusable="false"></svg>
+    </article>
+    <article class="kpi">
+      <p class="label">Released / spent</p>
+      <p class="kpi__value" id="kpiReleased">—</p>
+      <p class="kpi__meta"><span id="kpiReleaseRate"></span></p>
+      <div class="meter" aria-hidden="true"><span id="releaseMeter"></span></div>
+    </article>
+    <article class="kpi">
+      <p class="label">Contract value</p>
+      <p class="kpi__value" id="kpiContracts">—</p>
+      <p class="kpi__meta" id="kpiContractsMeta">—</p>
+    </article>
+    <article class="kpi">
+      <p class="label">Contractors</p>
+      <p class="kpi__value" id="kpiContractors">—</p>
+      <p class="kpi__meta" id="kpiContractorsMeta">—</p>
+    </article>
+    <article class="kpi">
+      <p class="label">States covered</p>
+      <p class="kpi__value" id="kpiStates">—</p>
+      <p class="kpi__meta"><span class="fresh"><span class="dot" aria-hidden="true"></span> Sources synced 6 Nov</span></p>
+    </article>
+  </section>
+
+  <div class="analytics">
+
+    <section class="panel panel--wide" id="ministries" aria-labelledby="ministriesTitle">
+      <header class="panel__head">
+        <div>
+          <p class="label">Appropriation vs release</p>
+          <h2 id="ministriesTitle">Spending by ministry</h2>
+        </div>
+        <button type="button" class="button button--quiet" id="ministryToggle" aria-expanded="false">View all 16</button>
+      </header>
+      <div class="legend" aria-hidden="true">
+        <span><i class="swatch swatch--budget"></i>Budget</span>
+        <span><i class="swatch swatch--released"></i>Released</span>
+      </div>
+      <div class="bars" id="ministryChart"></div>
+      <p class="panel__note">Select a ministry to filter the whole dashboard. Agencies shown as their own line.</p>
+    </section>
+
+    <section class="panel panel--narrow" id="states" aria-labelledby="statesTitle">
+      <header class="panel__head">
+        <div>
+          <p class="label">37 cells · 36 states + FCT</p>
+          <h2 id="statesTitle">Where money goes by state</h2>
+        </div>
+      </header>
+      <div class="cartogram" id="cartogram" role="group" aria-label="State allocation cartogram"></div>
+      <p class="legend legend--scale" aria-hidden="true">
+        <span>Lower ₦ per person</span>
+        <i class="bin bin--1"></i><i class="bin bin--2"></i><i class="bin bin--3"></i><i class="bin bin--4"></i><i class="bin bin--5"></i>
+        <span>Higher</span>
+      </p>
+      <div class="ranking" id="stateRanking"></div>
+    </section>
+
+    <section class="panel panel--full" id="procurement" aria-labelledby="sankeyTitle">
+      <header class="panel__head">
+        <div>
+          <p class="label">Contract award flow</p>
+          <h2 id="sankeyTitle">Ministry → state → sector</h2>
+        </div>
+        <p class="panel__stat" id="sankeyNote">—</p>
+      </header>
+      <div class="sankey" id="sankey"></div>
+      <p class="panel__note">Ribbon width is contract value. Hover to isolate a flow; select a ministry or state node to filter.</p>
+    </section>
+
+    <section class="panel panel--full" id="contractors" aria-labelledby="contractorsTitle">
+      <header class="panel__head">
+        <div>
+          <p class="label">By awarded value</p>
+          <h2 id="contractorsTitle">Contractor leaderboard</h2>
+        </div>
+      </header>
+      <div class="table-wrap table-wrap--compact">
+        <table class="data-table" id="contractorTable">
+          <caption class="visually-hidden">Contractors ranked by total awarded contract value for the current selection</caption>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Contractor</th>
+              <th scope="col" class="num">Value</th>
+              <th scope="col" class="num">Contracts</th>
+              <th scope="col">Flags</th>
+            </tr>
+          </thead>
+          <tbody id="contractorBody"></tbody>
+        </table>
+      </div>
+      <p class="panel__note">Flags are illustrative: single-bid award, concentration in one ministry, or no beneficial-ownership record.</p>
+    </section>
+
+    <section class="panel panel--full" id="explorer" aria-labelledby="explorerTitle">
+      <header class="panel__head">
+        <div>
+          <p class="label">Award-level records</p>
+          <h2 id="explorerTitle">Contract explorer</h2>
+        </div>
+        <div class="panel__actions">
+          <button type="button" class="button button--ghost" id="exportCsv">Export CSV</button>
+        </div>
+      </header>
+      <p class="panel__note" id="explorerCount">—</p>
+      <div class="table-wrap">
+        <table class="data-table" id="contractTable">
+          <caption id="explorerCaption">Contracts matching the current filters</caption>
+          <thead>
+            <tr>
+              <th scope="col" aria-sort="none"><button type="button" data-sort="project">Project</button></th>
+              <th scope="col" aria-sort="none"><button type="button" data-sort="ministry">Ministry</button></th>
+              <th scope="col" aria-sort="none"><button type="button" data-sort="state">State</button></th>
+              <th scope="col" aria-sort="none"><button type="button" data-sort="contractor">Contractor</button></th>
+              <th scope="col" class="num" aria-sort="descending"><button type="button" data-sort="value">Value</button></th>
+              <th scope="col" aria-sort="none"><button type="button" data-sort="awardDate">Awarded</button></th>
+              <th scope="col">Status</th>
+              <th scope="col" class="col-method">Method</th>
+            </tr>
+          </thead>
+          <tbody id="explorerBody"></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <button type="button" class="button button--quiet" id="pagePrev">Previous</button>
+        <p id="pageLabel">—</p>
+        <button type="button" class="button button--quiet" id="pageNext">Next</button>
+      </div>
+    </section>
+
+    <section class="panel panel--full insights" id="insights" aria-labelledby="insightsTitle">
+      <header class="panel__head">
+        <div>
+          <p class="label">What the data says</p>
+          <h2 id="insightsTitle">Four findings from this selection</h2>
+        </div>
+      </header>
+      <div class="insight-grid" id="insightsGrid"></div>
+    </section>
+
+    <section class="panel panel--full sources" id="sources" aria-labelledby="sourcesTitle">
+      <header class="panel__head">
+        <div>
+          <p class="label">Provenance</p>
+          <h2 id="sourcesTitle">Where these numbers come from</h2>
+        </div>
+        <button type="button" class="button button--ghost" id="refreshSources">Refresh data</button>
+      </header>
+      <div class="source-grid" id="sourcesGrid"></div>
+      <details class="method">
+        <summary>How we sourced this</summary>
+        <div class="method__body">
+          <p id="methodText"></p>
+          <ol>
+            <li>Appropriation line items are normalised to a common MDA taxonomy, then reconciled against releases.</li>
+            <li>Contract awards are deduplicated by project reference and matched to the awarding ministry and state of delivery.</li>
+            <li>Contractor identities are resolved to a single entity; beneficial-ownership records are marked missing when no filing exists.</li>
+            <li>Per-capita figures use 2022 population estimates and are shown for comparison only, not as an allocation formula.</li>
+          </ol>
+          <p class="method__licence" id="licenceText"></p>
+        </div>
+      </details>
+    </section>
+
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <p><strong>OpenLedger</strong> — a public-interest data prototype. Built as a demonstration of budget and procurement transparency tooling.</p>
+    <p class="footer__meta">Demo dataset · figures illustrative · code MIT · data CC BY 4.0</p>
+  </div>
+</footer>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+  <header class="drawer__head">
+    <h2 id="drawerTitle">Detail</h2>
+    <button type="button" class="drawer__close" id="drawerClose" aria-label="Close detail panel">Close</button>
+  </header>
+  <div class="drawer__body" id="drawerBody"></div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
